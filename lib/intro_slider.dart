@@ -24,7 +24,7 @@ class IntroSlider extends StatefulWidget {
 
   // ---------- SKIP button ----------
   /// Render your own SKIP button
-  final Widget renderSkipBtn;
+  final Widget skipButton;
 
   /// Width of view wrapper SKIP button
   final double widthSkipBtn;
@@ -52,7 +52,7 @@ class IntroSlider extends StatefulWidget {
 
   // ---------- PREV button ----------
   /// Render your own PREV button
-  final Widget renderPrevBtn;
+  final Widget prevButton;
 
   /// Width of view wrapper PREV button
   final double widthPrevBtn;
@@ -77,7 +77,7 @@ class IntroSlider extends StatefulWidget {
 
   // ---------- NEXT button ----------
   /// Render your own NEXT button
-  final Widget renderNextBtn;
+  final Widget nextButton;
 
   /// Change NEXT to any text you want
   final String nameNextBtn;
@@ -90,7 +90,7 @@ class IntroSlider extends StatefulWidget {
   final String nameDoneBtn;
 
   /// Render your own DONE button
-  final Widget renderDoneBtn;
+  final Widget doneButton;
 
   /// Width of view wrapper DONE button
   final double widthDoneBtn;
@@ -149,7 +149,7 @@ class IntroSlider extends StatefulWidget {
     this.backgroundColorAllSlides,
 
     // Skip
-    this.renderSkipBtn,
+    this.skipButton,
     this.widthSkipBtn,
     this.onSkipPress,
     this.nameSkipBtn = "SKIP",
@@ -160,7 +160,7 @@ class IntroSlider extends StatefulWidget {
     this.borderRadiusSkipBtn = defaultBtnBorderRadius,
 
     // Prev
-    this.renderPrevBtn,
+    this.prevButton,
     this.widthPrevBtn,
     this.namePrevBtn = "PREV",
     this.isShowPrevBtn = true,
@@ -170,7 +170,7 @@ class IntroSlider extends StatefulWidget {
     this.borderRadiusPrevBtn = defaultBtnBorderRadius,
 
     // Done
-    this.renderDoneBtn,
+    this.doneButton,
     this.widthDoneBtn,
     this.onDonePress,
     this.nameDoneBtn = "DONE",
@@ -181,7 +181,7 @@ class IntroSlider extends StatefulWidget {
     this.isShowDoneBtn = true,
 
     // Next
-    this.renderNextBtn,
+    this.nextButton,
     this.nameNextBtn = "NEXT",
     this.isShowNextBtn = true,
 
@@ -356,10 +356,9 @@ class IntroSliderState extends State<IntroSlider>
     if (tabController.index + 1 == widget.slides.length) {
       return Container(width: MediaQuery.of(context).size.width / 4);
     } else {
-      return FlatButton(
+      return widget.skipButton ?? FlatButton(
         onPressed: onSkipPress,
-        child: widget.renderSkipBtn ??
-            Text(
+        child: Text(
               widget.nameSkipBtn,
               style: widget.styleNameSkipBtn,
             ),
@@ -373,10 +372,9 @@ class IntroSliderState extends State<IntroSlider>
   }
 
   Widget buildDoneButton() {
-    return FlatButton(
+    return widget.doneButton ?? FlatButton(
       onPressed: onDonePress,
-      child: widget.renderDoneBtn ??
-          Text(
+      child: Text(
             widget.nameDoneBtn,
             style: widget.styleNameDoneBtn,
           ),
@@ -391,14 +389,14 @@ class IntroSliderState extends State<IntroSlider>
     if (tabController.index == 0) {
       return Container(width: MediaQuery.of(context).size.width / 4);
     } else {
-      return FlatButton(
+      return widget.prevButton ??
+            FlatButton(
         onPressed: () {
           if (!isAnimating(tabController.animation.value)) {
             tabController.animateTo(tabController.index - 1);
           }
         },
-        child: widget.renderPrevBtn ??
-            Text(
+        child: Text(
               widget.namePrevBtn,
               style: widget.styleNamePrevBtn,
             ),
@@ -412,14 +410,13 @@ class IntroSliderState extends State<IntroSlider>
   }
 
   Widget buildNextButton() {
-    return FlatButton(
+    return widget.nextButton ?? FlatButton(
       onPressed: () {
         if (!isAnimating(tabController.animation.value)) {
           tabController.animateTo(tabController.index + 1);
         }
       },
-      child: widget.renderNextBtn ??
-          Text(
+      child: Text(
             widget.nameNextBtn,
             style: widget.styleNameDoneBtn,
           ),
