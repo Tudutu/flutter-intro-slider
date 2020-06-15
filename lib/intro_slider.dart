@@ -17,7 +17,7 @@ const Color defaultBtnHighlightColor = Color(0x66FFFFFF);
 class IntroSlider extends StatefulWidget {
   // ---------- Slides ----------
   /// An array of Slide object
-  final List<Slide> slides;
+  final List<Widget> slides;
 
   /// Background color for all slides
   final Color backgroundColorAllSlides;
@@ -129,10 +129,6 @@ class IntroSlider extends StatefulWidget {
   /// Type dots animation
   final dotSliderAnimation typeDotAnimation;
 
-  // ---------- Tabs ----------
-  /// Render your own custom tabs
-  final List<Widget> listCustomTabs;
-
   /// Notify when tab change completed
   final Function onTabChangeCompleted;
 
@@ -197,7 +193,6 @@ class IntroSlider extends StatefulWidget {
     this.typeDotAnimation,
 
     // Tabs
-    this.listCustomTabs,
     this.onTabChangeCompleted,
     this.refFuncGoToTab,
 
@@ -224,15 +219,14 @@ class IntroSliderState extends State<IntroSlider>
   TabController tabController;
 
   List<Widget> tabs = new List();
-  
-  
+
   @override
   void initState() {
     super.initState();
 
     tabController =
         new TabController(length: widget.slides.length, vsync: this);
-    
+
     tabController.addListener(() {
       if (widget.onTabChangeCompleted != null) {
         widget.onTabChangeCompleted(tabController.index);
@@ -293,13 +287,64 @@ class IntroSliderState extends State<IntroSlider>
         child: Stack(
           children: <Widget>[
             TabBarView(
-              children: widget.listCustomTabs ?? renderListTabs(),
               controller: tabController,
               physics: widget.isScrollable
                   ? ScrollPhysics()
                   : NeverScrollableScrollPhysics(),
+              children: widget.slides,
             ),
-            renderBottom(),
+            Positioned(
+              child: Row(
+                children: <Widget>[
+                  // Skip button
+                  Container(
+                    alignment: Alignment.center,
+                    child: widget.isShowSkipBtn
+                        ? buildSkipButton()
+                        : (widget.isShowPrevBtn
+                            ? buildPrevButton()
+                            : Container()),
+                    width: widget.isShowSkipBtn
+                        ? widget.widthSkipBtn ??
+                            MediaQuery.of(context).size.width / 4
+                        : (widget.isShowPrevBtn
+                            ? widget.widthPrevBtn
+                            : MediaQuery.of(context).size.width / 4),
+                  ),
+
+                  // Dot indicator
+                  Flexible(
+                    child: widget.isShowDotIndicator
+                        ? _DotList(
+                            count: widget.slides.length,
+                            activeColor: widget.colorActiveDot,
+                            color: widget.colorDot,
+                            size: widget.sizeDot,
+                            animationType: dotSliderAnimation.DOT_MOVEMENT,
+                            tabController: tabController,
+                            animation: tabController.animation,
+                          )
+                        : Container(),
+                  ),
+
+                  // Next, Done button
+                  Container(
+                    alignment: Alignment.center,
+                    child: tabController.index + 1 == widget.slides.length
+                        ? widget.isShowDoneBtn ? buildDoneButton() : Container()
+                        : widget.isShowNextBtn
+                            ? buildNextButton()
+                            : Container(),
+                    width: widget.widthDoneBtn ??
+                        MediaQuery.of(context).size.width / 4,
+                    height: 50,
+                  ),
+                ],
+              ),
+              bottom: 10.0,
+              left: 10.0,
+              right: 10.0,
+            ),
           ],
         ),
       ),
@@ -384,220 +429,6 @@ class IntroSliderState extends State<IntroSlider>
           borderRadius: new BorderRadius.circular(widget.borderRadiusDoneBtn)),
     );
   }
-
-  Widget renderBottom() {
-    return Positioned(
-      child: Row(
-        children: <Widget>[
-          // Skip button
-          Container(
-            alignment: Alignment.center,
-            child: widget.isShowSkipBtn
-                ? buildSkipButton()
-                : (widget.isShowPrevBtn ? buildPrevButton() : Container()),
-            width: widget.isShowSkipBtn
-                ? widget.widthSkipBtn ?? MediaQuery.of(context).size.width / 4
-                : (widget.isShowPrevBtn
-                    ? widget.widthPrevBtn
-                    : MediaQuery.of(context).size.width / 4),
-          ),
-
-          // Dot indicator
-          Flexible(
-            child: widget.isShowDotIndicator
-                ? _DotList(
-                    count: widget.slides.length,
-                    activeColor: widget.colorActiveDot,
-                    color: widget.colorDot,
-                    size: widget.sizeDot,
-                    animationType: dotSliderAnimation.DOT_MOVEMENT,
-                    tabController: tabController,
-                    animation: tabController.animation,
-                  )
-                : Container(),
-          ),
-
-          // Next, Done button
-          Container(
-            alignment: Alignment.center,
-            child: tabController.index + 1 == widget.slides.length
-                ? widget.isShowDoneBtn ? buildDoneButton() : Container()
-                : widget.isShowNextBtn ? buildNextButton() : Container(),
-            width: widget.widthDoneBtn ?? MediaQuery.of(context).size.width / 4,
-            height: 50,
-          ),
-        ],
-      ),
-      bottom: 10.0,
-      left: 10.0,
-      right: 10.0,
-    );
-  }
-
-  List<Widget> renderListTabs() {
-    final tabs = <Widget>[];
-    for (int i = 0; i < widget.slides.length; i++) {
-      final slide = widget.slides[i];
-      tabs.add(
-        renderTab(
-          slide.widgetTitle,
-          slide.title,
-          slide.maxLineTitle,
-          slide.styleTitle,
-          slide.marginTitle,
-          slide.widgetDescription,
-          slide.description,
-          slide.maxLineTextDescription,
-          slide.styleDescription,
-          slide.marginDescription,
-          slide.pathImage,
-          slide.widthImage,
-          slide.heightImage,
-          slide.foregroundImageFit,
-          slide.centerWidget,
-          slide.onCenterItemPress,
-          slide.backgroundColor,
-          slide.colorBegin,
-          slide.colorEnd,
-          slide.directionColorBegin,
-          slide.directionColorEnd,
-          slide.backgroundImage,
-          slide.backgroundImageFit,
-          slide.backgroundOpacity,
-          slide.backgroundOpacityColor,
-          slide.backgroundBlendMode,
-        ),
-      );
-    }
-    return tabs;
-  }
-
-  Widget renderTab(
-    // Title
-    Widget widgetTitle,
-    String title,
-    int maxLineTitle,
-    TextStyle styleTitle,
-    EdgeInsets marginTitle,
-
-    // Description
-    Widget widgetDescription,
-    String description,
-    int maxLineTextDescription,
-    TextStyle styleDescription,
-    EdgeInsets marginDescription,
-
-    // Image
-    String pathImage,
-    double widthImage,
-    double heightImage,
-    BoxFit foregroundImageFit,
-
-    // Center Widget
-    Widget centerWidget,
-    Function onCenterItemPress,
-
-    // Background color
-    Color backgroundColor,
-    Color colorBegin,
-    Color colorEnd,
-    AlignmentGeometry directionColorBegin,
-    AlignmentGeometry directionColorEnd,
-
-    // Background image
-    String backgroundImage,
-    BoxFit backgroundImageFit,
-    double backgroundOpacity,
-    Color backgroundOpacityColor,
-    BlendMode backgroundBlendMode,
-  ) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: backgroundImage != null
-          ? BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage(backgroundImage),
-                fit: backgroundImageFit ?? BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  backgroundOpacityColor != null
-                      ? backgroundOpacityColor
-                          .withOpacity(backgroundOpacity ?? 0.5)
-                      : Colors.black.withOpacity(backgroundOpacity ?? 0.5),
-                  backgroundBlendMode ?? BlendMode.darken,
-                ),
-              ),
-            )
-          : BoxDecoration(
-              gradient: LinearGradient(
-                colors: backgroundColor != null
-                    ? [backgroundColor, backgroundColor]
-                    : [
-                        colorBegin ?? Colors.amberAccent,
-                        colorEnd ?? Colors.amberAccent
-                      ],
-                begin: directionColorBegin ?? Alignment.topLeft,
-                end: directionColorEnd ?? Alignment.bottomRight,
-              ),
-            ),
-      child: Container(
-        margin: EdgeInsets.only(bottom: 60.0),
-        child: ListView(
-          children: <Widget>[
-            Container(
-              // Title
-              child: widgetTitle ??
-                  Text(
-                    title ?? "",
-                    style: styleTitle ??
-                        TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 30.0,
-                        ),
-                    maxLines: maxLineTitle != null ? maxLineTitle : 1,
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-              margin: marginTitle ??
-                  EdgeInsets.only(
-                      top: 70.0, bottom: 50.0, left: 20.0, right: 20.0),
-            ),
-
-            // Image or Center widget
-            GestureDetector(
-              child: pathImage != null
-                  ? Image.asset(
-                      pathImage,
-                      width: widthImage ?? 200.0,
-                      height: heightImage ?? 200.0,
-                      fit: foregroundImageFit ?? BoxFit.contain,
-                    )
-                  : Center(child: centerWidget ?? Container()),
-              onTap: onCenterItemPress,
-            ),
-
-            // Description
-            Container(
-              child: widgetDescription ??
-                  Text(
-                    description ?? "",
-                    style: styleDescription ??
-                        TextStyle(color: Colors.white, fontSize: 18.0),
-                    textAlign: TextAlign.center,
-                    maxLines: maxLineTextDescription != null
-                        ? maxLineTextDescription
-                        : 100,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-              margin: marginDescription ??
-                  EdgeInsets.fromLTRB(20.0, 50.0, 20.0, 50.0),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _DotList extends StatefulWidget {
@@ -615,24 +446,22 @@ class _DotList extends StatefulWidget {
 
   final TabController tabController;
 
-  const _DotList(
-      {Key key,
-      @required this.tabController,
-      this.animation,
-      this.count,
-      this.color,
-      this.activeColor,
-      this.size,
-      this.animationType = dotSliderAnimation.DOT_MOVEMENT,
-  })
-      : super(key: key);
+  const _DotList({
+    Key key,
+    @required this.tabController,
+    this.animation,
+    this.count,
+    this.color,
+    this.activeColor,
+    this.size,
+    this.animationType = dotSliderAnimation.DOT_MOVEMENT,
+  }) : super(key: key);
 
   @override
   __DotListState createState() => __DotListState();
 }
 
 class __DotListState extends State<_DotList> {
-
   List<Widget> dots = new List();
   List<double> sizeDots = new List();
   List<double> opacityDots = new List();
@@ -687,8 +516,8 @@ class __DotListState extends State<_DotList> {
         switch (widget.animationType) {
           case dotSliderAnimation.DOT_MOVEMENT:
             marginLeftDotFocused = widget.animation.value * sizeDot * 2;
-            marginRightDotFocused = initValueMarginRight -
-                widget.animation.value * sizeDot * 2;
+            marginRightDotFocused =
+                initValueMarginRight - widget.animation.value * sizeDot * 2;
             break;
           case dotSliderAnimation.SIZE_TRANSITION:
             if (widget.animation.value == currentAnimationValue) {
@@ -699,7 +528,7 @@ class __DotListState extends State<_DotList> {
                 (widget.animation.value - currentAnimationValue).abs();
 
             final tabController = widget.tabController;
-            
+
             int diffValueIndex = (currentTabIndex - tabController.index).abs();
 
             int activeIndex = tabController.index;
@@ -718,9 +547,7 @@ class __DotListState extends State<_DotList> {
                   1.0 - (diffValueAnimation / diffValueIndex) / 2;
               opacityDots[activeIndex] =
                   0.5 + (diffValueAnimation / diffValueIndex) / 2;
-
             } else {
-
               if (widget.animation.value > currentAnimationValue) {
                 // Swipe left
                 sizeDots[currentTabIndex] =
@@ -747,7 +574,6 @@ class __DotListState extends State<_DotList> {
 
   @override
   Widget build(BuildContext context) {
-
     final rtl = isRTLLanguage(Localizations.localeOf(context).languageCode);
 
     return Container(
@@ -761,15 +587,15 @@ class __DotListState extends State<_DotList> {
                   color: widget.color,
                   width: sizeDots[i],
                 )
-              ],
+            ],
             mainAxisAlignment: MainAxisAlignment.center,
           ),
           widget.animationType == dotSliderAnimation.DOT_MOVEMENT
               ? Center(
                   child: _Dot(
-                    color: widget.activeColor,
-                    width: widget.size,
-                    margin: rtl 
+                  color: widget.activeColor,
+                  width: widget.size,
+                  margin: rtl
                       ? EdgeInsets.only(
                           left: marginRightDotFocused,
                           right: marginLeftDotFocused,
@@ -777,8 +603,7 @@ class __DotListState extends State<_DotList> {
                       : EdgeInsets.only(
                           left: marginLeftDotFocused,
                           right: marginRightDotFocused),
-                    )
-                )
+                ))
               : Container()
         ],
       ),
@@ -791,41 +616,37 @@ class __DotListState extends State<_DotList> {
 }
 
 class _Dot extends StatelessWidget {
+  final double width;
 
-  final double width; 
-  
   final Color color;
-  
+
   final double opacity;
 
   final EdgeInsets margin;
 
-  const _Dot({
-    Key key, 
-    @required this.width, 
-    @required this.color,
-    this.margin,
-    this.opacity = 1.0
-  }) : super(key: key);
+  const _Dot(
+      {Key key,
+      @required this.width,
+      @required this.color,
+      this.margin,
+      this.opacity = 1.0})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    
     final dot = Container(
-        decoration: BoxDecoration(
-          color: color, 
-          borderRadius: BorderRadius.circular(width / 2)
-        ),
-        width: width,
-        height: width,
-        margin: margin ?? EdgeInsets.only(left: width / 2, right: width / 2),
-      );
-    
-    return opacity < 1.0 
-      ? Opacity(
-          opacity: opacity,
-          child: dot,
-        ) 
-      : dot;
+      decoration: BoxDecoration(
+          color: color, borderRadius: BorderRadius.circular(width / 2)),
+      width: width,
+      height: width,
+      margin: margin ?? EdgeInsets.only(left: width / 2, right: width / 2),
+    );
+
+    return opacity < 1.0
+        ? Opacity(
+            opacity: opacity,
+            child: dot,
+          )
+        : dot;
   }
 }
