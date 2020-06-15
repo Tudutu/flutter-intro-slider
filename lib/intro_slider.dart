@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -13,6 +15,51 @@ const double defaultBtnBorderRadius = 30.0;
 const Color defaultBtnColor = Colors.transparent;
 
 const Color defaultBtnHighlightColor = Color(0x66FFFFFF);
+
+class IntroSliderController {
+
+  IntroSliderController({
+    int initialIndex = 0,
+    int length,
+    TickerProvider vsync,
+  })  : assert(length != null && length >= 0),
+        assert(initialIndex != null && initialIndex >= 0 && (length == 0 || initialIndex < length)),
+        tabController = TabController(initialIndex: initialIndex, length: length, vsync: vsync);
+
+  final TabController tabController;
+
+  dispose() {
+    tabController.dispose();
+  }
+
+  void goToTab(index) {
+    if (index < tabController.length) {
+      tabController.animateTo(index);
+    }
+  }
+
+  // Checking if tab is animating
+  bool get isAnimating => tabController.animation.value -
+            tabController.animation.value.truncate() != 0;
+
+  void moveToLast() {
+    if (!isAnimating) {
+      tabController.animateTo(tabController.length - 1);
+    }
+  }
+
+  void moveToNext() {
+    if (!isAnimating) {
+      tabController.animateTo(tabController.index + 1);
+    }
+  }
+
+  void moveToPrevious() {
+    if (!isAnimating) {
+      tabController.animateTo(tabController.index - 1);
+    }
+  }
+}
 
 class IntroSlider extends StatefulWidget {
   // ---------- Slides ----------
@@ -142,8 +189,12 @@ class IntroSlider extends StatefulWidget {
   /// Show or hide status bar
   final bool shouldHideStatusBar;
 
+  final IntroSliderController controller;
+
   // Constructor
   IntroSlider({
+    @required this.controller,
+    
     // Slides
     @required this.slides,
     this.backgroundColorAllSlides,
@@ -208,7 +259,8 @@ class IntroSlider extends StatefulWidget {
         assert(isShowPrevBtn != null),
         assert(isShowSkipBtn != null),
         assert(shouldHideStatusBar != null),
-        assert(isScrollable != null);
+        assert(isScrollable != null),
+        assert(controller != null);
 
   @override
   IntroSliderState createState() => new IntroSliderState();
@@ -224,8 +276,7 @@ class IntroSliderState extends State<IntroSlider>
   void initState() {
     super.initState();
 
-    tabController =
-        new TabController(length: widget.slides.length, vsync: this);
+    tabController = widget.controller.tabController;
 
     tabController.addListener(() {
       if (widget.onTabChangeCompleted != null) {
@@ -235,18 +286,16 @@ class IntroSliderState extends State<IntroSlider>
 
     // Send reference function goToTab to parent
     if (widget.refFuncGoToTab != null) {
-      widget.refFuncGoToTab(goToTab);
+      widget.refFuncGoToTab(widget.controller.goToTab);
     }
   }
 
   void onSkipPress() {
     if (widget.onSkipPress != null) {
       widget.onSkipPress();
-    } else {
-      if (!isAnimating(tabController.animation.value)) {
-        tabController.animateTo(widget.slides.length - 1);
-      }
     }
+
+    widget.controller.moveToLast();
   }
 
   void onDonePress() {
@@ -255,23 +304,10 @@ class IntroSliderState extends State<IntroSlider>
     }
   }
 
-  void goToTab(index) {
-    if (index < tabController.length) {
-      tabController.animateTo(index);
-    }
-  }
-
   @override
   void dispose() {
     super.dispose();
     tabController.dispose();
-  }
-
-  // Checking if tab is animating
-  bool isAnimating(value) {
-    return tabController.animation.value -
-            tabController.animation.value.truncate() !=
-        0;
   }
 
   @override
@@ -392,9 +428,7 @@ class IntroSliderState extends State<IntroSlider>
       return widget.prevButton ??
             FlatButton(
         onPressed: () {
-          if (!isAnimating(tabController.animation.value)) {
-            tabController.animateTo(tabController.index - 1);
-          }
+          widget.controller.moveToPrevious();
         },
         child: Text(
               widget.namePrevBtn,
@@ -412,9 +446,7 @@ class IntroSliderState extends State<IntroSlider>
   Widget buildNextButton() {
     return widget.nextButton ?? FlatButton(
       onPressed: () {
-        if (!isAnimating(tabController.animation.value)) {
-          tabController.animateTo(tabController.index + 1);
-        }
+        widget.controller.moveToNext();
       },
       child: Text(
             widget.nameNextBtn,
@@ -512,57 +544,53 @@ class __DotListState extends State<_DotList> {
       setState(() {
         switch (widget.animationType) {
           case dotSliderAnimation.DOT_MOVEMENT:
+            
             marginLeftDotFocused = widget.animation.value * sizeDot * 2;
-            marginRightDotFocused =
-                initValueMarginRight - widget.animation.value * sizeDot * 2;
+            marginRightDotFocused = initValueMarginRight - widget.animation.value * sizeDot * 2;
             break;
+          
           case dotSliderAnimation.SIZE_TRANSITION:
             if (widget.animation.value == currentAnimationValue) {
               break;
             }
 
-            double diffValueAnimation =
-                (widget.animation.value - currentAnimationValue).abs();
+            double diffValueAnimation = (widget.animation.value - currentAnimationValue).abs();
 
             final tabController = widget.tabController;
 
             int diffValueIndex = (currentTabIndex - tabController.index).abs();
 
+            double dotRadius = sizeDot / 2.0;
+            
             int activeIndex = tabController.index;
 
             // When press skip button
-            if (tabController.indexIsChanging &&
-                (activeIndex - tabController.previousIndex).abs() > 1) {
-              if (diffValueAnimation < 1.0) {
-                diffValueAnimation = 1.0;
-              }
-              sizeDots[currentTabIndex] = sizeDot * 1.5 -
-                  (sizeDot / 2) * (1 - (diffValueIndex - diffValueAnimation));
-              sizeDots[activeIndex] = sizeDot +
-                  (sizeDot / 2) * (1 - (diffValueIndex - diffValueAnimation));
-              opacityDots[currentTabIndex] =
-                  1.0 - (diffValueAnimation / diffValueIndex) / 2;
-              opacityDots[activeIndex] =
-                  0.5 + (diffValueAnimation / diffValueIndex) / 2;
-            } else {
-              if (widget.animation.value > currentAnimationValue) {
-                // Swipe left
-                sizeDots[currentTabIndex] =
-                    sizeDot * 1.5 - (sizeDot / 2) * diffValueAnimation;
-                sizeDots[currentTabIndex + 1] =
-                    sizeDot + (sizeDot / 2) * diffValueAnimation;
-                opacityDots[currentTabIndex] = 1.0 - diffValueAnimation / 2;
-                opacityDots[currentTabIndex + 1] = 0.5 + diffValueAnimation / 2;
-              } else {
-                // Swipe right
-                sizeDots[currentTabIndex] =
-                    sizeDot * 1.5 - (sizeDot / 2) * diffValueAnimation;
-                sizeDots[currentTabIndex - 1] =
-                    sizeDot + (sizeDot / 2) * diffValueAnimation;
-                opacityDots[currentTabIndex] = 1.0 - diffValueAnimation / 2;
-                opacityDots[currentTabIndex - 1] = 0.5 + diffValueAnimation / 2;
-              }
+            bool skipButtonPressed = tabController.indexIsChanging && (activeIndex - tabController.previousIndex).abs() > 1;
+
+            final opaque = 1.0;
+            final semiopaque = 0.5;
+
+            if(skipButtonPressed) {
+              diffValueAnimation = min(diffValueAnimation, 1.0);
             }
+
+            var opacityFactor = skipButtonPressed ? (diffValueAnimation / diffValueIndex) / 2 : diffValueAnimation / 2;
+            var sizeFactor = skipButtonPressed ? 1 - (diffValueIndex - diffValueAnimation) : diffValueAnimation;
+
+            final previousTabIndex = skipButtonPressed 
+              ? activeIndex
+              : widget.animation.value > currentAnimationValue 
+                // Swipe left
+                ? currentTabIndex + 1 
+                // Swipe right
+                : currentTabIndex - 1;
+          
+            sizeDots[currentTabIndex] = dotRadius * (3 - sizeFactor);
+            opacityDots[currentTabIndex] = opaque - opacityFactor;
+            
+            sizeDots[previousTabIndex] = dotRadius * (2 + sizeFactor);
+            opacityDots[previousTabIndex] = semiopaque + opacityFactor;
+            
             break;
         }
       });
