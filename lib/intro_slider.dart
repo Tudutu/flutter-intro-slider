@@ -310,12 +310,6 @@ class IntroSliderState extends State<IntroSlider>
   }
 
   @override
-  void dispose() {
-    super.dispose();
-    tabController.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     // Full screen view
     if (widget.shouldHideStatusBar) {
